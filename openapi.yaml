@@ -3,36 +3,118 @@
 
 openapi: 3.0.3
 info:
-    title: Greeter API
-    description: The greeting service definition.
+    title: Agent API
+    description: |-
+        Agent is the service for dc task agent.
+         Resource: agent
+         Version: v1
+         BasePath: /agent/v1/**
     version: 0.0.1
 paths:
-    /helloworld/{name}:
-        get:
+    /agent/v1/task/{id}:
+        put:
             tags:
-                - Greeter
-            description: Sends a greeting
-            operationId: Greeter_SayHello
+                - Agent
+            description: UpdateTask update task info.
+            operationId: Agent_UpdateTask
             parameters:
-                - name: name
+                - name: id
                   in: path
                   required: true
                   schema:
-                    type: string
+                    type: integer
+                    format: int64
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.agent.UpdateTaskRequest'
+                required: true
             responses:
                 "200":
                     description: OK
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/helloworld.v1.HelloReply'
+                                $ref: '#/components/schemas/api.agent.UpdateTaskReply'
+    /agent/v1/tasks:
+        get:
+            tags:
+                - Agent
+            description: ListTasks list this agent all tasks.
+            operationId: Agent_ListTasks
+            parameters:
+                - name: name
+                  in: query
+                  schema:
+                    type: array
+                    items:
+                        type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.agent.ListTaskReply'
 components:
     schemas:
-        helloworld.v1.HelloReply:
+        api.agent.ListTaskReply:
             type: object
             properties:
-                message:
+                tasks:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.agent.Task'
+        api.agent.Task:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int64
+                name:
                     type: string
-            description: The response message containing the greetings
+                status:
+                    type: integer
+                    format: int32
+                created_at:
+                    type: string
+                updated_at:
+                    type: string
+                schedule_available_ratio:
+                    type: number
+                    format: float
+                schedule_total_count:
+                    type: integer
+                    format: int32
+                schedule_success_count:
+                    type: integer
+                    format: int32
+                schedule_failed_count:
+                    type: integer
+                    format: int32
+                online_nodes:
+                    type: array
+                    items:
+                        type: string
+        api.agent.UpdateTaskReply:
+            type: object
+            properties: {}
+        api.agent.UpdateTaskRequest:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int64
+                name:
+                    type: string
+                title:
+                    type: string
+                status:
+                    type: integer
+                    format: int32
+                type:
+                    type: integer
+                    format: int32
 tags:
-    - name: Greeter
+    - name: Agent

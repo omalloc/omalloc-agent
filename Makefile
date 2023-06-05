@@ -75,7 +75,7 @@ build:
     -X main.Version=$(VERSION) \
     -X main.GitHash=$(GITHASH) \
     -X main.Name=$(APPNAME) \
-    -X main.Built=$(Built)" -o ./bin/ ./...
+    -X main.Built=$(Built)" -o ./bin/server ./cmd/...
 
 .PHONY: zip
 # zip bin file

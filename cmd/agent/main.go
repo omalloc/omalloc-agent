@@ -6,6 +6,7 @@ import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
+	"github.com/go-kratos/kratos/v2/encoding/json"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/registry"
@@ -15,7 +16,7 @@ import (
 	"github.com/omalloc/contrib/kratos/zap"
 	"go.uber.org/automaxprocs/maxprocs"
 
-	"agent/internal/conf"
+	"github.com/omalloc/agent/internal/conf"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
@@ -38,6 +39,7 @@ var (
 )
 
 func init() {
+	json.MarshalOptions.UseProtoNames = true
 	maxprocs.Set(maxprocs.Logger(nil))
 
 	rootCmd.PersistentFlags().StringVar(&flagconf, "conf", "../../configs", "config path")

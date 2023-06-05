@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package api.agent;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/omalloc/agent/api/agent;agent";
+option java_multiple_files = true;
+option java_package = "api.agent";
+
+// Agent is the service for dc task agent.
+// Resource: agent
+// Version: v1
+// BasePath: /agent/v1/**
+service Agent {
+	// ListTasks list this agent all tasks.
+	rpc ListTasks (ListTaskRequest) returns (ListTaskReply) {
+		option (google.api.http) = {
+			get: "/agent/v1/tasks",
+			response_body: "tasks"
+		};
+	};
+
+	// UpdateTask update task info.
+	rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskReply) {
+		option (google.api.http) = {
+			put: "/agent/v1/task/{id}"
+			body: "*"
+		};
+	};
+}
+
+message Task {
+	int64 id = 1;
+	string name = 2;
+	int32 status = 4;
+	string created_at = 5;
+	string updated_at = 6;
+	float schedule_available_ratio = 7; // 调度可用率
+	int32 schedule_total_count = 8; // 调度次数
+	int32 schedule_success_count = 9; // 调度成功次数
+	int32 schedule_failed_count = 10; // 调度失败次数
+	repeated string online_nodes = 11; // 在线的节点(executor)
+}
+
+message ListTaskRequest {
+	repeated string name = 1; // 查询的任务名称
+}
+message ListTaskReply {
+	repeated Task tasks = 1;
+}
+
+message UpdateTaskRequest {
+	int64 id = 1;
+	string name = 2; // 任务Key(唯一)
+	string title = 3; // 任务名称
+	int32 status = 4; // 任务状态 1=正常 2=暂停
+	int32 type = 5; // 任务类型 1=普通任务
+}
+
+message UpdateTaskReply {}

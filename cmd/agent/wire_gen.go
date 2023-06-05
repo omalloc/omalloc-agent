@@ -9,13 +9,13 @@ package main
 import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/omalloc/agent/internal/biz"
+	"github.com/omalloc/agent/internal/conf"
+	"github.com/omalloc/agent/internal/data"
+	"github.com/omalloc/agent/internal/server"
+	"github.com/omalloc/agent/internal/service"
 	"github.com/omalloc/contrib/kratos/health"
 	"github.com/omalloc/contrib/kratos/registry"
-	"agent/internal/biz"
-	"agent/internal/conf"
-	"agent/internal/data"
-	"agent/internal/server"
-	"agent/internal/service"
 )
 
 // Injectors from wire.go:
@@ -28,17 +28,16 @@ func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.
 		return nil, nil, err
 	}
 	registrar := registry.NewRegistrar(client)
+	taskUsecase := biz.NewTask(logger)
+	agentService := service.NewAgentService(logger, taskUsecase)
+	grpcServer := server.NewGRPCServer(confServer, agentService, logger)
+	httpServer := server.NewHTTPServer(confServer, agentService, logger)
 	dataData, cleanup2, err := data.NewData(confData, logger)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	greeterRepo := data.NewGreeterRepo(dataData, logger)
-	greeterUsecase := biz.NewGreeterUsecase(greeterRepo, logger)
-	greeterService := service.NewGreeterService(greeterUsecase)
-	grpcServer := server.NewGRPCServer(confServer, greeterService, logger)
-	httpServer := server.NewHTTPServer(confServer, greeterService, logger)
-	v := server.NewChecker(dataData)
+	v := server.NewChecker(dataData, client)
 	healthServer := health.NewServer(logger, httpServer, v)
 	app := newApp(logger, registrar, grpcServer, httpServer, healthServer)
 	return app, func() {
