@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package api.executor;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/omalloc/agent/api/executor;executor";
+option java_multiple_files = true;
+option java_package = "api.executor";
+
+service ExecutorRegistrar {
+	// Register the registration.
+	rpc Register (ExecutorRegisterRequest) returns (ExecutorRegisterReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/register"
+			body: "*"
+		};
+	};
+
+	// Deregister the registration.
+	rpc Deregister (ExecutorDeregisterRequest) returns (ExecutorDeregisterReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/deregister"
+			body: "*"
+		};
+	};
+}
+
+service Executor {
+	// Run 触发任务单元
+	rpc Run (RunRequest) returns (RunReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/run"
+			body: "*"
+		};
+	};
+
+	// Kill 杀死任务单元
+	rpc Kill (KillRequest) returns (KillReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/kill"
+			body: "*"
+		};
+	};
+
+	// GetUnitLog 获取任务日志
+	rpc GetUnitLog (UnitLogRequest) returns (UnitLogReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/log"
+			body: "*"
+		};
+	};
+
+	// Beat 心跳检测
+	rpc Beat (BeatRequest) returns (BeatReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/beat"
+			body: "*"
+		};
+	};
+
+	// IdleBeat 忙碌检测
+	rpc IdleBeat (IdleBeatRequest) returns (IdleBeatReply) {
+		option (google.api.http) = {
+			post: "/executor/v1/idlebeat"
+			body: "*"
+		};
+	};
+	
+}
+
+enum ExecutorProtocol {
+	HTTP = 0;
+	GRPC = 1;
+}
+
+message ExecutorRegisterRequest {
+	string executor_name = 1;
+	ExecutorProtocol executor_protocol = 2;
+	string executor_addr = 3;
+	int32 executor_port = 4;
+	string executor_dsn = 5;
+}
+message ExecutorRegisterReply {
+	bool success = 1;
+	string key = 2;
+}
+
+message ExecutorDeregisterRequest {
+	string key = 1;
+}
+message ExecutorDeregisterReply {
+	bool success = 1;
+}
+
+message RunRequest {
+	string key = 1;
+	string unit_name = 2;
+	string unit_args = 3;
+}
+message RunReply {
+	bool success = 1;
+	string key = 2;
+	string reason = 3;
+	string remark = 4;
+}
+
+message KillRequest {
+	string key = 1;
+	string unit_name = 2;
+}
+message KillReply {
+	bool success = 1;
+	string key = 2;
+	string reason = 3;
+}
+
+message UnitLogRequest {
+	string key = 1;
+	string unit_name = 2;
+}
+message UnitLog {
+	string time = 1;
+	string unit_name = 2;
+	string log = 3;
+	string error = 4;
+}
+message UnitLogReply {
+	bool success = 1;
+	string key = 2;
+	repeated UnitLog logs = 3;
+}
+
+message BeatRequest {}
+message BeatReply {
+	bool success = 1;
+	string key = 2;
+}
+
+message IdleBeatRequest {}
+message IdleBeatReply {
+	bool success = 1;
+	string key = 2;
+	string reason = 3;
+}

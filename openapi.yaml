@@ -3,12 +3,7 @@
 
 openapi: 3.0.3
 info:
-    title: Agent API
-    description: |-
-        Agent is the service for dc task agent.
-         Resource: agent
-         Version: v1
-         BasePath: /agent/v1/**
+    title: ""
     version: 0.0.1
 paths:
     /agent/v1/task/{id}:
@@ -57,6 +52,139 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/api.agent.ListTaskReply'
+    /executor/v1/beat:
+        post:
+            tags:
+                - Executor
+            description: Beat 心跳检测
+            operationId: Executor_Beat
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.BeatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.BeatReply'
+    /executor/v1/deregister:
+        post:
+            tags:
+                - ExecutorRegistrar
+            description: Deregister the registration.
+            operationId: ExecutorRegistrar_Deregister
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.ExecutorDeregisterRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.ExecutorDeregisterReply'
+    /executor/v1/idlebeat:
+        post:
+            tags:
+                - Executor
+            description: IdleBeat 忙碌检测
+            operationId: Executor_IdleBeat
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.IdleBeatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.IdleBeatReply'
+    /executor/v1/kill:
+        post:
+            tags:
+                - Executor
+            description: Kill 杀死任务单元
+            operationId: Executor_Kill
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.KillRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.KillReply'
+    /executor/v1/log:
+        post:
+            tags:
+                - Executor
+            description: GetUnitLog 获取任务日志
+            operationId: Executor_GetUnitLog
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.UnitLogRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.UnitLogReply'
+    /executor/v1/register:
+        post:
+            tags:
+                - ExecutorRegistrar
+            description: Register the registration.
+            operationId: ExecutorRegistrar_Register
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.ExecutorRegisterRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.ExecutorRegisterReply'
+    /executor/v1/run:
+        post:
+            tags:
+                - Executor
+            description: Run 触发任务单元
+            operationId: Executor_Run
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.executor.RunRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.executor.RunReply'
 components:
     schemas:
         api.agent.ListTaskReply:
@@ -116,5 +244,131 @@ components:
                 type:
                     type: integer
                     format: int32
+        api.executor.BeatReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                key:
+                    type: string
+        api.executor.BeatRequest:
+            type: object
+            properties: {}
+        api.executor.ExecutorDeregisterReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+        api.executor.ExecutorDeregisterRequest:
+            type: object
+            properties:
+                key:
+                    type: string
+        api.executor.ExecutorRegisterReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                key:
+                    type: string
+        api.executor.ExecutorRegisterRequest:
+            type: object
+            properties:
+                executor_name:
+                    type: string
+                executor_protocol:
+                    type: integer
+                    format: enum
+                executor_addr:
+                    type: string
+                executor_port:
+                    type: integer
+                    format: int32
+                executor_dsn:
+                    type: string
+        api.executor.IdleBeatReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                key:
+                    type: string
+                reason:
+                    type: string
+        api.executor.IdleBeatRequest:
+            type: object
+            properties: {}
+        api.executor.KillReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                key:
+                    type: string
+                reason:
+                    type: string
+        api.executor.KillRequest:
+            type: object
+            properties:
+                key:
+                    type: string
+                unit_name:
+                    type: string
+        api.executor.RunReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                key:
+                    type: string
+                reason:
+                    type: string
+                remark:
+                    type: string
+        api.executor.RunRequest:
+            type: object
+            properties:
+                key:
+                    type: string
+                unit_name:
+                    type: string
+                unit_args:
+                    type: string
+        api.executor.UnitLog:
+            type: object
+            properties:
+                time:
+                    type: string
+                unit_name:
+                    type: string
+                log:
+                    type: string
+                error:
+                    type: string
+        api.executor.UnitLogReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                key:
+                    type: string
+                logs:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/api.executor.UnitLog'
+        api.executor.UnitLogRequest:
+            type: object
+            properties:
+                key:
+                    type: string
+                unit_name:
+                    type: string
 tags:
     - name: Agent
+      description: |-
+        Agent is the service for dc task agent.
+         Resource: agent
+         Version: v1
+         BasePath: /agent/v1/**
+    - name: Executor
+    - name: ExecutorRegistrar
