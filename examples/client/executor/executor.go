@@ -1,8 +1,10 @@
-package sdk
+package executor
 
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -17,7 +19,16 @@ var (
 	ErrExecutorHandleExist = errors.New("executor handle exist")
 )
 
+type ServeMode string
+
+const (
+	ServeModeGRPC ServeMode = "grpc"
+	ServeModeHTTP ServeMode = "http"
+)
+
 type Callback func(args string) error
+
+type Option func(*config)
 
 type Executor interface {
 	Handle(name string, cb Callback) error
@@ -26,18 +37,20 @@ type Executor interface {
 	Signal() <-chan os.Signal
 }
 
-type Config struct {
-	Key      string
-	Name     string
-	Protocol string
-	Addr     string
-	Port     int
+type config struct {
+	serveMode  ServeMode // `grpc` or `http`
+	grpcServer grpc.ServiceRegistrar
+	Key        string
+	Name       string
+	Protocol   string
+	Addr       string
+	Port       int
 }
 
 type executor struct {
 	mu sync.RWMutex
 
-	opts        *Config
+	cfg         *config
 	signal      chan os.Signal
 	handlers    map[string]Callback
 	registrar   pb.ExecutorRegistrarClient
@@ -71,21 +84,20 @@ func (exec *executor) run(name string, args string) error {
 
 func (exec *executor) Start(ctx context.Context) error {
 	// run gprc server
-	srv := grpc.NewServer()
-	pb.RegisterExecutorServer(srv, exec.controlSide)
+	// pb.RegisterExecutorServer(exec.cfg.grpcServer, exec.controlSide)
 
-	// run grpc client
-	resp, err := exec.registrar.Register(context.TODO(), &pb.ExecutorRegisterRequest{
-		ExecutorProtocol: pb.ExecutorProtocol_GRPC,
-		ExecutorName:     exec.opts.Name,
-		ExecutorAddr:     exec.opts.Addr,
-		ExecutorPort:     int32(exec.opts.Port),
-	})
-	if err != nil {
-		return err
-	}
+	// // run grpc client
+	// resp, err := exec.registrar.Register(context.TODO(), &pb.ExecutorRegisterRequest{
+	// 	ExecutorProtocol: pb.ExecutorProtocol_GRPC,
+	// 	ExecutorName:     exec.cfg.Name,
+	// 	ExecutorAddr:     exec.cfg.Addr,
+	// 	ExecutorPort:     int32(exec.cfg.Port),
+	// })
+	// if err != nil {
+	// 	return err
+	// }
 
-	exec.opts.Key = resp.Key
+	// exec.cfg.Key = resp.Key
 
 	// handle os signal
 	signal.Notify(exec.signal, syscall.SIGINT, syscall.SIGTERM)
@@ -94,7 +106,7 @@ func (exec *executor) Start(ctx context.Context) error {
 
 func (exec *executor) Stop(ctx context.Context) error {
 	exec.registrar.Deregister(context.TODO(), &pb.ExecutorDeregisterRequest{
-		Key: exec.opts.Key,
+		Key: exec.cfg.Key,
 	})
 	return nil
 }
@@ -104,12 +116,50 @@ func (exec *executor) Signal() <-chan os.Signal {
 	return exec.signal
 }
 
-func New() Executor {
-	return &executor{
-		opts:        &Config{},
+func New(opts ...Option) Executor {
+	cfg := &config{
+		Addr: "0.0.0.0",
+		Port: 9000,
+	}
+	for _, apply := range opts {
+		apply(cfg)
+	}
+
+	fmt.Printf("%#+v", cfg)
+
+	r := &executor{
+		cfg:         cfg,
 		signal:      make(chan os.Signal),
 		handlers:    make(map[string]Callback),
 		registrar:   pb.NewExecutorRegistrarClient(&grpc.ClientConn{}),
 		controlSide: NewExecutorControlSideServer(),
+	}
+	return r
+}
+
+// WithGRPCServer 用于设置 gRPC 服务端(与原生 grpc 端口复用)
+func WithGRPCServer(server *grpc.Server) Option {
+	return func(cfg *config) {
+		cfg.grpcServer = server
+		cfg.serveMode = ServeModeGRPC
+	}
+}
+
+// WithHTTPServer 用于设置 http 服务端(与原生 http 端口复用)
+func WithHTTPServer(server *http.Server) Option {
+	return func(cfg *config) {
+		cfg.serveMode = ServeModeHTTP
+	}
+}
+
+func WithServeAddr(addr string) Option {
+	return func(cfg *config) {
+		cfg.Addr = addr
+	}
+}
+
+func WithServePort(port int) Option {
+	return func(cfg *config) {
+		cfg.Port = port
 	}
 }

@@ -1,4 +1,4 @@
-package sdk
+package executor
 
 import (
 	"context"
@@ -31,6 +31,6 @@ func (s *ExecutorControlSideServer) Run(ctx context.Context, req *pb.RunRequest)
 
 	return &pb.RunReply{
 		Success: err == nil,
-		Key:     s.executor.opts.Key,
+		Key:     s.executor.cfg.Key,
 	}, err
 }
